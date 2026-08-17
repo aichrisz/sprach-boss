@@ -28,8 +28,11 @@ const ARCADE_DURATION_MS = 60000;
 let progress = loadProgress();
 let battle = null; // state battle aktif
 const SOUND_KEY = "sprachboss.sound";
+const MUSIC_KEY = "sprachboss.music";
 let soundOn = (() => { try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch { return true; } })();
+let musicOn = (() => { try { return localStorage.getItem(MUSIC_KEY) !== "off"; } catch { return true; } })();
 function saveSound() { try { localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off"); } catch {} }
+function saveMusic() { try { localStorage.setItem(MUSIC_KEY, musicOn ? "on" : "off"); } catch {} }
 
 // ---------- persistence ----------
 function loadProgress() {
@@ -148,7 +151,7 @@ function ensureAudio() {
 }
 function tone(freq, dur, when = 0, type = "sine", vol = 0.15) {
   const ctx = ensureAudio();
-  if (!ctx || !soundOn) return;
+  if (!ctx) return;
   const t0 = ctx.currentTime + when;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -166,8 +169,24 @@ const sfx = {
   correct() { tone(523, 0.12, 0, "sine"); tone(659, 0.12, 0.08); },
   wrong() { tone(196, 0.2, 0, "square", 0.08); },
   victory() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.15, i * 0.12)); },
-  defeat() { [392, 330, 262].forEach((f, i) => tone(f, 0.2, i * 0.15, "triangle", 0.12)); }
+  defeat() { [392, 330, 262].forEach((f, i) => tone(f, 0.2, i * 0.15, "triangle", 0.12)); },
+  click() { tone(880, 0.04, 0, "sine", 0.05); }
 };
+
+// ---------- musik latar (loop sederhana, WebAudio) ----------
+let musicTimer = null;
+let musicStep = 0;
+const MUSIC = [262, 330, 392, 523]; // C E G C
+function musicTick() {
+  if (!soundOn || !musicOn) { musicTimer = null; return; }
+  const freq = MUSIC[musicStep % MUSIC.length];
+  tone(freq, 0.5, 0, "triangle", 0.04);
+  tone(freq * 2, 0.3, 0.02, "sine", 0.02);
+  musicStep++;
+  musicTimer = setTimeout(musicTick, 420);
+}
+function startMusic() { if (!musicTimer && musicOn && soundOn) musicTick(); }
+function stopMusic() { if (musicTimer) { clearTimeout(musicTimer); musicTimer = null; } }
 
 // ---------- battle ----------
 function startCampaignLevel(tema, level) {
@@ -343,8 +362,16 @@ function el(tag, cls, text) {
   return e;
 }
 
+// tombol dengan efek klik
+function btnEl(cls, text, onclick) {
+  const b = el("button", cls, text);
+  b.onclick = (ev) => { sfx.click(); if (onclick) onclick(ev); };
+  return b;
+}
+
 function render() {
   battle = null;
+  if (soundOn) { ensureAudio(); startMusic(); } else stopMusic();
   renderHome();
 }
 
@@ -361,15 +388,12 @@ function renderHome() {
   wrap.appendChild(stats);
 
   const btns = el("div", "menu");
-  const btnCampaign = el("button", "btn primary", "Kampanye ⚔️");
-  btnCampaign.onclick = () => renderMap();
-  const btnArcade = el("button", "btn", "Arcade ⏱️");
-  btnArcade.onclick = () => startArcade();
-  const btnReset = el("button", "btn danger", "Reset Progres");
-  btnReset.onclick = () => { if (confirm("Hapus semua progres?")) resetProgress(); };
-  const btnSound = el("button", "btn", soundOn ? "🔊 Suara: ON" : "🔇 Suara: OFF");
-  btnSound.onclick = () => { soundOn = !soundOn; saveSound(); renderHome(); };
-  btns.append(btnCampaign, btnArcade, btnReset, btnSound);
+  const btnCampaign = btnEl("btn primary", "Kampanye ⚔️", () => renderMap());
+  const btnArcade = btnEl("btn", "Arcade ⏱️", () => startArcade());
+  const btnReset = btnEl("btn danger", "Reset Progres", () => { if (confirm("Hapus semua progres?")) resetProgress(); });
+  const btnSound = btnEl("btn", soundOn ? "🔊 Suara: ON" : "🔇 Suara: OFF", () => { soundOn = !soundOn; saveSound(); if (!soundOn) stopMusic(); renderHome(); });
+  const btnMusic = btnEl("btn", musicOn ? "🎵 Musik: ON" : "🎵 Musik: OFF", () => { musicOn = !musicOn; saveMusic(); if (musicOn && soundOn) startMusic(); else stopMusic(); renderHome(); });
+  btns.append(btnCampaign, btnArcade, btnReset, btnSound, btnMusic);
   wrap.appendChild(btns);
 
   if (progress.wrongWords.length > 0) {
@@ -387,8 +411,7 @@ function renderHome() {
 function renderMap() {
   app.innerHTML = "";
   const wrap = el("div", "screen map");
-  const back = el("button", "btn back", "← Home");
-  back.onclick = () => render();
+  const back = btnEl("btn back", "← Home", () => render());
   wrap.appendChild(back);
   wrap.appendChild(el("h2", "", "Peta Kampanye"));
 
@@ -398,9 +421,8 @@ function renderMap() {
     const locked = unlockedLv < 1;
     zoneDiv.appendChild(el("h3", locked ? "zone-title locked" : "zone-title", `${z.emoji} ${z.label}${locked ? " 🔒" : ""}`));
     for (let lv = 1; lv <= LEVELS_PER_ZONE; lv++) {
-      const btn = el("button", "btn level" + (lv > unlockedLv ? " locked" : ""), `Level ${lv}${lv > unlockedLv ? " 🔒" : ""}`);
+      const btn = btnEl("btn level" + (lv > unlockedLv ? " locked" : ""), `Level ${lv}${lv > unlockedLv ? " 🔒" : ""}`, () => startCampaignLevel(z.tema, lv));
       btn.disabled = lv > unlockedLv;
-      if (!btn.disabled) btn.onclick = () => startCampaignLevel(z.tema, lv);
       zoneDiv.appendChild(btn);
     }
     wrap.appendChild(zoneDiv);
@@ -452,8 +474,7 @@ function renderBattle() {
   // opsi
   const opts = el("div", "options");
   q.options.forEach((opt, i) => {
-    const b = el("button", "btn option", opt);
-    b.onclick = () => onAnswer(opt);
+    const b = btnEl("btn option", opt, () => onAnswer(opt));
     opts.appendChild(b);
   });
   wrap.appendChild(opts);
@@ -493,8 +514,7 @@ function renderResult(win) {
     wrap.appendChild(el("p", "", `Skor: ${battle.score} · Benar: ${battle.correct} · Streak terbaik: ${battle.streak}`));
     wrap.appendChild(el("p", "", `Best score: ${progress.arcadeBest}`));
   }
-  const btn = el("button", "btn primary", "Kembali ke Home");
-  btn.onclick = () => render();
+  const btn = btnEl("btn primary", "Kembali ke Home", () => render());
   wrap.appendChild(btn);
   app.appendChild(wrap);
 }
