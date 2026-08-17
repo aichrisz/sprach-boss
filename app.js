@@ -27,6 +27,9 @@ const ARCADE_DURATION_MS = 60000;
 // ---------- state ----------
 let progress = loadProgress();
 let battle = null; // state battle aktif
+const SOUND_KEY = "sprachboss.sound";
+let soundOn = (() => { try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch { return true; } })();
+function saveSound() { try { localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off"); } catch {} }
 
 // ---------- persistence ----------
 function loadProgress() {
@@ -134,6 +137,38 @@ function makeQuestion(tema, tier) {
   return { prompt, answer, options, vocab: correct };
 }
 
+// ---------- sound (WebAudio, no asset files) ----------
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { audioCtx = null; }
+  }
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq, dur, when = 0, type = "sine", vol = 0.15) {
+  const ctx = ensureAudio();
+  if (!ctx || !soundOn) return;
+  const t0 = ctx.currentTime + when;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.05);
+}
+const sfx = {
+  correct() { tone(523, 0.12, 0, "sine"); tone(659, 0.12, 0.08); },
+  wrong() { tone(196, 0.2, 0, "square", 0.08); },
+  victory() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.15, i * 0.12)); },
+  defeat() { [392, 330, 262].forEach((f, i) => tone(f, 0.2, i * 0.15, "triangle", 0.12)); }
+};
+
 // ---------- battle ----------
 function startCampaignLevel(tema, level) {
   const questions = [];
@@ -212,6 +247,7 @@ function onAnswer(selected) {
     if (isCorrect) {
       battle.streak++;
       battle.enemyHp -= playerDamage(battle.streak);
+      sfx.correct();
       if (battle.enemyHp <= 0) {
         battle.enemyHp = 0;
         endBattle(true);
@@ -220,6 +256,7 @@ function onAnswer(selected) {
     } else {
       battle.streak = 0;
       battle.hp--;
+      sfx.wrong();
       if (battle.hp <= 0) {
         battle.hp = 0;
         endBattle(false);
@@ -233,9 +270,11 @@ function onAnswer(selected) {
       battle.streak++;
       battle.correct++;
       battle.score += Math.round(10 * (1 + Math.floor(battle.streak / 5) * 0.5));
+      sfx.correct();
       if (battle.streak > progress.streakBest) progress.streakBest = battle.streak;
     } else {
       battle.streak = 0;
+      sfx.wrong();
       recordWrong(q.vocab);
     }
     if (Date.now() - battle.startTime >= ARCADE_DURATION_MS) {
@@ -263,6 +302,7 @@ function recordWrong(vocab) {
 function endBattle(win) {
   battle.over = true;
   clearTimeout(battle.timerId);
+  if (win) sfx.victory(); else sfx.defeat();
 
   if (battle.mode === "campaign") {
     if (win) {
@@ -280,6 +320,10 @@ function endBattle(win) {
           progress.unlocked[next.tema] = 1;
         }
       }
+    }
+    // campurkan kosakata yang kalah ke wrongWords (boost belajar)
+    if (!win) {
+      battle.questions.forEach(q => { if (q.vocab) recordWrong(q.vocab); });
     }
   } else {
     // arcade
@@ -323,7 +367,9 @@ function renderHome() {
   btnArcade.onclick = () => startArcade();
   const btnReset = el("button", "btn danger", "Reset Progres");
   btnReset.onclick = () => { if (confirm("Hapus semua progres?")) resetProgress(); };
-  btns.append(btnCampaign, btnArcade, btnReset);
+  const btnSound = el("button", "btn", soundOn ? "🔊 Suara: ON" : "🔇 Suara: OFF");
+  btnSound.onclick = () => { soundOn = !soundOn; saveSound(); renderHome(); };
+  btns.append(btnCampaign, btnArcade, btnReset, btnSound);
   wrap.appendChild(btns);
 
   if (progress.wrongWords.length > 0) {
