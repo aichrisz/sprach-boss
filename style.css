@@ -1,0 +1,467 @@
+/* ============================================================
+   Sprach-Boss — style.css
+   RPG belajar vocab Jerman. Dark theme, gold/purple, mobile-first.
+   ============================================================ */
+
+/* ---------- Reset & dasar ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0f1220;
+  --bg-card: #1a1f33;
+  --bg-card-hover: #232945;
+  --gold: #f0c040;
+  --gold-dim: #a8862f;
+  --purple: #8b5cf6;
+  --purple-dim: #5b3fa8;
+  --text: #e8e6f0;
+  --text-dim: #9a97ad;
+  --green: #3ddc84;
+  --red: #e5484d;
+  --border: #2c3350;
+  --radius: 14px;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+/* ---------- Layar (screen switching) ---------- */
+.screen {
+  display: flex;
+  min-height: 100vh;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  flex-direction: column;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* ---------- Judul ---------- */
+.title {
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 800;
+  text-align: center;
+  background: linear-gradient(135deg, var(--gold), var(--purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--gold); /* fallback */
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 1.05rem;
+  margin: 6px 0 24px;
+}
+
+/* ---------- Statistik pemain ---------- */
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  font-weight: 700;
+  text-align: center;
+  min-width: 90px;
+}
+
+.stat b {
+  display: block;
+  font-size: 1.3rem;
+  color: var(--gold);
+}
+
+.stat span {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ---------- Menu utama ---------- */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: auto;
+}
+
+/* ---------- Tombol ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 24px; /* besar, ramah HP */
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  transition: transform 0.15s ease, background 0.15s ease,
+    box-shadow 0.15s ease, opacity 0.15s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.btn:hover {
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+  color: #1a1400;
+  border-color: transparent;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #e5484d, #a12b2f);
+  color: #fff;
+  border-color: transparent;
+}
+
+.btn-back {
+  background: transparent;
+  color: var(--text-dim);
+  border-color: var(--border);
+  padding: 10px 16px;
+  font-size: 0.95rem;
+}
+
+/* Tombol opsi jawaban */
+.btn-option {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+  font-size: 1.05rem;
+  padding: 14px 18px;
+  border: 2px solid var(--border);
+}
+
+.btn-option.correct {
+  border-color: var(--green);
+  background: rgba(61, 220, 132, 0.15);
+  color: var(--green);
+}
+
+.btn-option.wrong {
+  border-color: var(--red);
+  background: rgba(229, 72, 77, 0.15);
+  color: var(--red);
+}
+
+/* Tombol level di peta */
+.btn-level {
+  width: 100%;
+  justify-content: space-between;
+  font-size: 1.05rem;
+}
+
+.btn-level .stars {
+  color: var(--gold);
+  letter-spacing: 2px;
+  font-size: 0.9rem;
+}
+
+.btn-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-locked:hover {
+  transform: none;
+  box-shadow: none;
+  background: var(--bg-card);
+}
+
+/* ---------- Peta level ---------- */
+.map {
+  gap: 12px;
+}
+
+.zone {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.zone-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--purple);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zone-title.locked {
+  color: var(--text-dim);
+}
+
+.zone .menu {
+  margin-top: 0;
+  gap: 10px;
+}
+
+/* ---------- Bar HP (pemain vs musuh) ---------- */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-dim);
+}
+
+.bar-label b {
+  color: var(--text);
+}
+
+.bar-track {
+  height: 14px;
+  background: #0a0c16;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.4s ease;
+}
+
+.bar-fill.player {
+  background: linear-gradient(90deg, #2ea86a, var(--green));
+}
+
+.bar-fill.enemy {
+  background: linear-gradient(90deg, #b02a2f, var(--red));
+}
+
+/* ---------- Streak & pertanyaan ---------- */
+.streak {
+  text-align: center;
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.question {
+  text-align: center;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  font-weight: 800;
+  margin: 12px 0 8px;
+}
+
+.question .de {
+  color: var(--purple);
+}
+
+/* ---------- Timer ---------- */
+.timer-track {
+  height: 10px;
+  background: #0a0c16;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 14px 0;
+}
+
+.timer-fill {
+  height: 100%;
+  border-radius: 5px;
+  /* merah -> kuning -> hijau sesuai sisa waktu */
+  background: linear-gradient(90deg, var(--red), #f0c040, var(--green));
+  background-size: 200% 100%;
+  transition: width 0.2s linear, background-position 0.2s linear;
+}
+
+/* ---------- Opsi jawaban ---------- */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* ---------- Progress quiz ---------- */
+.qprogress {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.qprogress .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.qprogress .dot.done {
+  background: var(--gold);
+}
+
+.qprogress .dot.current {
+  background: var(--purple);
+  transform: scale(1.25);
+}
+
+/* ---------- Daftar jawaban salah ---------- */
+.wronglist {
+  margin-top: 20px;
+  background: rgba(229, 72, 77, 0.08);
+  border: 1px solid rgba(229, 72, 77, 0.35);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.wronglist h3 {
+  color: var(--red);
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.wronglist li {
+  list-style: none;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 0.95rem;
+}
+
+.wronglist li:last-child {
+  border-bottom: none;
+}
+
+.wronglist .de {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* ---------- Layar hasil ---------- */
+.result {
+  text-align: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.result .title {
+  font-size: clamp(2.2rem, 9vw, 3.4rem);
+}
+
+.victory .title {
+  background: linear-gradient(135deg, var(--green), var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.defeat .title {
+  background: linear-gradient(135deg, var(--red), #ff8a5c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.result .stats {
+  margin-top: 8px;
+}
+
+/* ---------- Animasi halus ---------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.screen.active {
+  animation: fadeIn 0.3s ease;
+}
+
+/* ---------- Aksesibilitas ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (min-width: 600px) {
+  .screen {
+    padding: 40px 24px 60px;
+  }
+
+  .btn {
+    font-size: 1.15rem;
+    padding: 18px 28px;
+  }
+}

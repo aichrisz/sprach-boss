@@ -39,7 +39,8 @@ function loadProgress() {
     return {
       ...structuredClone(DEFAULT_PROGRESS),
       ...p,
-      unlocked: { ...DEFAULT_PROGRESS.unlocked, ...p.unlocked }
+      unlocked: { ...DEFAULT_PROGRESS.unlocked, ...p.unlocked },
+      wrongWords: Array.isArray(p.wrongWords) ? p.wrongWords : []
     };
   } catch {
     return structuredClone(DEFAULT_PROGRESS);
@@ -186,8 +187,8 @@ function startArcade() {
     correct: 0,
     timerMs: ARCADE_TIMER_MS,
     timerEnd: 0,
+    startTime: Date.now(),
     timerId: null,
-    startTime: 0,
     over: false
   };
   renderBattle();
